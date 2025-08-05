@@ -7,7 +7,9 @@ from synth_mapping_helper.utils import second_to_beat
 import logging
 
 from util import beats_per_measure_from_time_signature
+
 log = logging.getLogger(__name__)
+
 
 def parse_segment_filename(filename: str) -> dict:
     """
@@ -95,26 +97,26 @@ def merge_synth_segments(
         # Offset all objects in this segment by the start time
         segment_copy.offset_everything(delta_s=start_time)
         notes = segment_copy.difficulties["Expert"]
-        
+
         # Collect all note positions from all note types
         all_note_positions = []
-        
+
         # Add positions from right hand notes
-        if hasattr(notes, 'right') and notes.right.items():
+        if hasattr(notes, "right") and notes.right.items():
             all_note_positions.extend(notes.right.keys())
-        
+
         # Add positions from left hand notes
-        if hasattr(notes, 'left') and notes.left.items():
+        if hasattr(notes, "left") and notes.left.items():
             all_note_positions.extend(notes.left.keys())
-            
+
         # Add positions from single notes
-        if hasattr(notes, 'single') and notes.single.items():
+        if hasattr(notes, "single") and notes.single.items():
             all_note_positions.extend(notes.single.keys())
-            
+
         # Add positions from both hand notes
-        if hasattr(notes, 'both') and notes.both.items():
+        if hasattr(notes, "both") and notes.both.items():
             all_note_positions.extend(notes.both.keys())
-        
+
         # Find first and last note positions across all note types
         if all_note_positions:
             first = min(all_note_positions)
@@ -127,7 +129,9 @@ def merge_synth_segments(
             total_notes = 0
             log.warning(f"No notes found in segment {i}")
 
-        segment_copy.bookmarks[first] = f"{segment_copy.bpm} BPM || Time Signature {beats_per_measure}/{4}"
+        segment_copy.bookmarks[first] = (
+            f"{segment_copy.bpm} BPM || Time Signature {beats_per_measure}/{4}"
+        )
         log.debug(f"first note after start time offset: {first}")
         log.debug(f"last note after start time offset: {last}")
         log.debug(f"total notes: {total_notes}")
@@ -144,7 +148,7 @@ def merge_synth_segments(
 def merge_synth_segments_from_folder(
     base_beatmap: Union[str, Path],
     folder_path: Union[str, Path],
-    output_path: Optional[Union[str, Path]] = None
+    output_path: Optional[Union[str, Path]] = None,
 ) -> SynthFile:
     """
     Convenience function to merge all segment files from a folder.

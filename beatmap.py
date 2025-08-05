@@ -7,8 +7,10 @@ from synth_mapping_helper.utils import second_to_beat
 import logging
 
 from util import beats_per_measure_from_time_signature
+
 log = logging.getLogger(__name__)
 from audio import segment_beatmap_audio
+
 
 def load_beatmap_from_synth(synth_file_path):
     """Load beatmap data from .synth file using SMH or fallback to manual extraction"""
@@ -18,6 +20,7 @@ def load_beatmap_from_synth(synth_file_path):
         log.error(f"Error loading beatmap with SMH: {e}")
         return False
 
+
 def create_tempo_segment_with_audio(beatmap: SynthFile, segment, output_path):
     """Create a beatmap variant with specific BPM and audio segment matching the tempo duration"""
     log.debug(f"segment: {segment}")
@@ -26,9 +29,9 @@ def create_tempo_segment_with_audio(beatmap: SynthFile, segment, output_path):
         beatmap_segment = copy.deepcopy(beatmap)
 
         # Update BPM and set Offset
-        bpm = float(segment['bpm'])
-        start_time = segment['start_ms']
-        end_time = segment['end_ms']
+        bpm = float(segment["bpm"])
+        start_time = segment["start_ms"]
+        end_time = segment["end_ms"]
         beatmap_segment.change_bpm(bpm)
         seconds_per_beat = 60 / bpm
         # Get time signature
@@ -43,19 +46,17 @@ def create_tempo_segment_with_audio(beatmap: SynthFile, segment, output_path):
             time_to_next_1 = 0
         else:
             time_to_next_1 = seconds_per_measure - remainder
-        total_offset = 0 if start_time == 0 else (silence_duration_seconds + time_to_next_1) * 1000
+        total_offset = (
+            0 if start_time == 0 else (silence_duration_seconds + time_to_next_1) * 1000
+        )
         beatmap_segment.change_offset(total_offset)
 
-        log.info(f"Creating segment: BPM={segment['bpm']}, Offset={total_offset}ms, {start_time:.2f}ms-{end_time:.2f}ms -> {output_path}")
-
-        # Extract the audio segment for this tempo section
-        success = segment_beatmap_audio(
-            beatmap,
-            start_time,
-            end_time,
-            beatmap_segment
+        log.info(
+            f"Creating segment: BPM={segment['bpm']}, Offset={total_offset}ms, {start_time:.2f}ms-{end_time:.2f}ms -> {output_path}"
         )
 
+        # Extract the audio segment for this tempo section
+        success = segment_beatmap_audio(beatmap, start_time, end_time, beatmap_segment)
 
         segment_length = end_time - start_time
 
@@ -71,20 +72,33 @@ def create_tempo_segment_with_audio(beatmap: SynthFile, segment, output_path):
         log.debug(f"start_beat: {start_beat}")
 
         # Length of the segment in beats
-        total_beats = math.ceil(math.floor(second_to_beat(segment_length / 1000, beatmap_segment.bpm)) / beats_per_measure) * beats_per_measure
+        total_beats = (
+            math.ceil(
+                math.floor(second_to_beat(segment_length / 1000, beatmap_segment.bpm))
+                / beats_per_measure
+            )
+            * beats_per_measure
+        )
         if total_beats < beats_per_measure:
             total_beats = beats_per_measure
         log.debug(f"total_beats: {total_beats}")
         # Make sure the last beat falls on the last beat of a measure before the end of the segment
-        end_beat = ((total_beats // beats_per_measure) * beats_per_measure)
+        end_beat = (total_beats // beats_per_measure) * beats_per_measure
         if start_time != 0:
             end_beat += start_beat
         log.debug(f"end_beat: {end_beat}")
 
-        add_timing_notes(beatmap_segment, beats_per_measure=beats_per_measure, start_beat=start_beat, end_beat=end_beat)
+        add_timing_notes(
+            beatmap_segment,
+            beats_per_measure=beats_per_measure,
+            start_beat=start_beat,
+            end_beat=end_beat,
+        )
 
         if not success:
-            raise RuntimeError(f"Failed to extract audio segment from {start_time}ms to {end_time}ms")
+            raise RuntimeError(
+                f"Failed to extract audio segment from {start_time}ms to {end_time}ms"
+            )
         beatmap_segment.save_as(output_file=output_path)
         return True
 
@@ -92,15 +106,18 @@ def create_tempo_segment_with_audio(beatmap: SynthFile, segment, output_path):
         log.error(f"Error creating tempo segment with audio: {e}")
         return False
 
-def add_timing_notes(synth_file: SynthFile,
-                           difficulty: str = "Expert",
-                           start_beat: float = 0.0,
-                           end_beat: float = None,
-                           center_x: float = 0.0,
-                           center_y: float = 0.0,
-                           spiral_radius: float = 4.0,  # radius of spiral
-                           rotations_per_measure: float = 0.5,  # rotations per measure
-                           beats_per_measure: int = 4):
+
+def add_timing_notes(
+    synth_file: SynthFile,
+    difficulty: str = "Expert",
+    start_beat: float = 0.0,
+    end_beat: float = None,
+    center_x: float = 0.0,
+    center_y: float = 0.0,
+    spiral_radius: float = 4.0,  # radius of spiral
+    rotations_per_measure: float = 0.5,  # rotations per measure
+    beats_per_measure: int = 4,
+):
     """
     Add right-handed notes every quarter note to a SynthFile using spiral generation.
 
@@ -136,44 +153,50 @@ def add_timing_notes(synth_file: SynthFile,
     beat_times = np.arange(start_beat, end_beat + 1.0, 1.0)
     # Ensure we don't exceed end_beat
     beat_times = beat_times[beat_times <= end_beat]
-    
+
     if len(beat_times) == 0:
         log.error(f"No beats to add between {start_beat} and {end_beat}")
         return
-    
-    log.info(f"Adding {len(beat_times)} beats from Start Beat: {start_beat} || End Beat: {end_beat} @ {synth_file.bpm}")
-    
+
+    log.info(
+        f"Adding {len(beat_times)} beats from Start Beat: {start_beat} || End Beat: {end_beat} @ {synth_file.bpm}"
+    )
+
     # Create base nodes with center coordinates and beat times
     # Shape: (n_beats, 3) where columns are [x, y, time]
     base_nodes = np.zeros((len(beat_times), 3))
     base_nodes[:, 0] = center_x  # x coordinates
-    base_nodes[:, 1] = center_y  # y coordinates  
+    base_nodes[:, 1] = center_y  # y coordinates
     base_nodes[:, 2] = beat_times  # time coordinates
-    
+
     # Calculate fidelity based on rotations per measure (your fix)
     total_measures = len(beat_times) / beats_per_measure
     spiral_times = total_measures * rotations_per_measure
-    fidelity = len(beat_times) / spiral_times if rotations_per_measure > 0 else len(beat_times)
-    
+    fidelity = (
+        len(beat_times) / spiral_times if rotations_per_measure > 0 else len(beat_times)
+    )
+
     # Generate spiral coordinates using the provided functions
     spiral_coords = add_spiral(
         nodes=base_nodes,
         fidelity=fidelity,
         radius=spiral_radius,
         start_angle=0.0,
-        direction=1
+        direction=1,
     )
-    
+
     # Calculate beats per full rotation for direction reversal
     beats_per_rotation = beats_per_measure / rotations_per_measure
-    
+
     # Add notes to appropriate hands
     for i, beat_time in enumerate(beat_times):
         # Determine direction based on completed rotations
         # Every full rotation (360°), reverse direction
         rotation_number = int((beat_time - start_beat) // beats_per_rotation)
-        direction = 1 if rotation_number % 2 == 0 else -1  # Alternate direction every rotation
-        
+        direction = (
+            1 if rotation_number % 2 == 0 else -1
+        )  # Alternate direction every rotation
+
         # If direction is reversed, flip the coordinates
         if direction == -1:
             # Reverse the spiral by flipping around center
@@ -182,11 +205,11 @@ def add_timing_notes(synth_file: SynthFile,
         else:
             x_pos = spiral_coords[i, 0]
             y_pos = spiral_coords[i, 1]
-        
+
         # Determine which hand based on 2-measure intervals
         measure_number = int((beat_time - start_beat) // hand_switch_interval)
-        is_right_hand = (measure_number % 2 == 0)  # Even measures = right, odd = left
-        
+        is_right_hand = measure_number % 2 == 0  # Even measures = right, odd = left
+
         # Create note coordinates (1x3 array)
         note_coords = np.array([[x_pos, y_pos, beat_time]])
 
