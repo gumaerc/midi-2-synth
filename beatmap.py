@@ -5,6 +5,8 @@ from synth_mapping_helper.pattern_generation import add_spiral
 from synth_mapping_helper.synth_format import SynthFile, DataContainer
 from synth_mapping_helper.utils import second_to_beat
 import logging
+
+from util import beats_per_measure_from_time_signature
 log = logging.getLogger(__name__)
 from audio import segment_beatmap_audio
 
@@ -18,6 +20,7 @@ def load_beatmap_from_synth(synth_file_path):
 
 def create_tempo_segment_with_audio(beatmap: SynthFile, segment, output_path):
     """Create a beatmap variant with specific BPM and audio segment matching the tempo duration"""
+    log.debug(f"segment: {segment}")
     try:
         # Create a deep copy of the beatmap data
         beatmap_segment = copy.deepcopy(beatmap)
@@ -29,9 +32,9 @@ def create_tempo_segment_with_audio(beatmap: SynthFile, segment, output_path):
         beatmap_segment.change_bpm(bpm)
         seconds_per_beat = 60 / bpm
         # Get time signature
-        log.debug(f"segment: {segment}")
-        beats_per_measure = segment['time_signature']['numerator'] if "time_signature" in segment else 4
-        log.debug(f"beats_per_measure: {beats_per_measure}")
+        beats_per_measure = beats_per_measure_from_time_signature(
+            segment.time_signature
+        )
         seconds_per_measure = seconds_per_beat * beats_per_measure
         # The beatmap editor requires at least 2 seconds of silence
         silence_duration_seconds = 2

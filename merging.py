@@ -5,6 +5,8 @@ import dataclasses
 from synth_mapping_helper.synth_format import SynthFile
 from synth_mapping_helper.utils import second_to_beat
 import logging
+
+from util import beats_per_measure_from_time_signature
 log = logging.getLogger(__name__)
 
 def parse_segment_filename(filename: str) -> dict:
@@ -78,10 +80,9 @@ def merge_synth_segments(
         segment_copy.change_offset(0)
 
         # Get time signature
-        beats_per_measure = (
-            info["time_signature"]["numerator"] if "time_signature" in info else 4
+        beats_per_measure = beats_per_measure_from_time_signature(
+            segment_copy.time_signature
         )
-        log.debug(f"beats_per_measure: {beats_per_measure}")
         log.debug(f"i: {i}")
 
         # Calculate time offset in beats for this segment
