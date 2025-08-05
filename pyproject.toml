@@ -1,0 +1,14 @@
+[project]
+name = "midi-2-synth"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "mido>=1.3.3",
+    "numpy>=2.2.6",
+    "progressbar2>=4.5.0",
+    "pydub>=0.25.1",
+    "pyzipper>=0.3.6",
+    "synth-mapping-helper>=1.5.18",
+]
