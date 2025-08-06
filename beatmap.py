@@ -35,11 +35,17 @@ def create_tempo_segment_with_audio(beatmap: SynthFile, segment, output_path):
         beatmap_segment.change_bpm(bpm)
         seconds_per_beat = 60 / bpm
         # Get time signature
-        beats_per_measure = beats_per_measure_from_time_signature({
-            "numerator": segment["time_signature"]["numerator"],
-            "denominator": segment["time_signature"]["denominator"]
-        })
-        note_value = segment["time_signature"]["denominator"] / 4 if segment["time_signature"] else 1
+        beats_per_measure = beats_per_measure_from_time_signature(
+            {
+                "numerator": segment["time_signature"]["numerator"],
+                "denominator": segment["time_signature"]["denominator"],
+            }
+        )
+        note_value = (
+            segment["time_signature"]["denominator"] / 4
+            if segment["time_signature"]
+            else 1
+        )
         seconds_per_measure = seconds_per_beat * beats_per_measure
         # The beatmap editor requires at least 2 seconds of silence
         silence_duration_seconds = 2

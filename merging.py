@@ -82,10 +82,12 @@ def merge_synth_segments(
         segment_copy.change_offset(0)
 
         # Get time signature
-        beats_per_measure = beats_per_measure_from_time_signature({
-            "numerator": info["time_signature"]["numerator"],
-            "denominator": info["time_signature"]["denominator"]
-        })
+        beats_per_measure = beats_per_measure_from_time_signature(
+            {
+                "numerator": info["time_signature"]["numerator"],
+                "denominator": info["time_signature"]["denominator"],
+            }
+        )
         log.debug(f"i: {i}")
 
         # Calculate time offset in beats for this segment
