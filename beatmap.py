@@ -41,7 +41,7 @@ def create_tempo_segment_with_audio(beatmap: SynthFile, segment, output_path):
                 "denominator": segment["time_signature"]["denominator"],
             }
         )
-        note_value = (
+        note_value = 1 / (
             segment["time_signature"]["denominator"] / 4
             if segment["time_signature"]
             else 1
