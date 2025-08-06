@@ -83,7 +83,10 @@ def merge_synth_segments(
 
         # Get time signature
         beats_per_measure = beats_per_measure_from_time_signature(
-            segment_copy.time_signature
+            {
+                "numerator": info["time_signature"]["numerator"],
+                "denominator": info["time_signature"]["denominator"],
+            }
         )
         log.debug(f"i: {i}")
 

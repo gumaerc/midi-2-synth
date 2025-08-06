@@ -85,10 +85,10 @@ def beats_per_measure_from_time_signature(time_signature):
     denominator = (
         time_signature["denominator"] if "denominator" in time_signature else 4
     )
-    ratio = denominator / 4
-    beats_per_measure = int(numerator / ratio)
+    note_value = denominator / 4
+    beats_per_measure = int(numerator / note_value)
     log.debug(f"numerator: {numerator}")
     log.debug(f"denominator: {denominator}")
-    log.debug(f"ratio: {ratio}")
+    log.debug(f"note_value: {note_value}")
     log.debug(f"beats_per_measure: {beats_per_measure}")
     return beats_per_measure
