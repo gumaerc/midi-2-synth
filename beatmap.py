@@ -35,9 +35,11 @@ def create_tempo_segment_with_audio(beatmap: SynthFile, segment, output_path):
         beatmap_segment.change_bpm(bpm)
         seconds_per_beat = 60 / bpm
         # Get time signature
-        beats_per_measure = beats_per_measure_from_time_signature(
-            segment.time_signature
-        )
+        beats_per_measure = beats_per_measure_from_time_signature({
+            "numerator": segment["time_signature"]["numerator"],
+            "denominator": segment["time_signature"]["denominator"]
+        })
+        note_value = segment["time_signature"]["denominator"] / 4 if segment["time_signature"] else 1
         seconds_per_measure = seconds_per_beat * beats_per_measure
         # The beatmap editor requires at least 2 seconds of silence
         silence_duration_seconds = 2
@@ -91,6 +93,7 @@ def create_tempo_segment_with_audio(beatmap: SynthFile, segment, output_path):
         add_timing_notes(
             beatmap_segment,
             beats_per_measure=beats_per_measure,
+            note_value=note_value,
             start_beat=start_beat,
             end_beat=end_beat,
         )
@@ -117,6 +120,7 @@ def add_timing_notes(
     spiral_radius: float = 4.0,  # radius of spiral
     rotations_per_measure: float = 0.5,  # rotations per measure
     beats_per_measure: int = 4,
+    note_value: float = 1.0,  # denominator of time signature
 ):
     """
     Add right-handed notes every quarter note to a SynthFile using spiral generation.
@@ -131,6 +135,7 @@ def add_timing_notes(
         spiral_radius: Maximum radius of spiral (default: 3.0)
         rotations_per_measure: How many rotations per measure (default: 0.5)
         beats_per_measure: Beats per measure for hand switching (default: 4)
+        note_value: Denominator of time signature (default: 1.0)
     """
 
     # Get or create the difficulty
@@ -146,11 +151,10 @@ def add_timing_notes(
             end_beat += start_beat
 
     # Calculate total duration and beats per hand switch (2 measures)
-    total_beats = end_beat - start_beat
     hand_switch_interval = beats_per_measure * 2  # 2 measures
 
     # Generate quarter note beats
-    beat_times = np.arange(start_beat, end_beat + 1.0, 1.0)
+    beat_times = np.arange(start_beat, end_beat + note_value, note_value)
     # Ensure we don't exceed end_beat
     beat_times = beat_times[beat_times <= end_beat]
 
